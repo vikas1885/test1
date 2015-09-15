@@ -18,6 +18,7 @@ class CourseOverviewField(serializers.RelatedField):
     def to_representation(self, course_overview):
         course_id = unicode(course_overview.id)
         request = self.context.get('request', None)
+        discussion_url = None
         if request:
             video_outline_url = reverse(
                 'video-summary-list',
@@ -34,6 +35,10 @@ class CourseOverviewField(serializers.RelatedField):
                 kwargs={'course_id': course_id},
                 request=request
             )
+            discussion_url = reverse(
+                'discussion_course',
+                kwargs={'course_id': course_id},
+                request=request) if course_overview.is_discussion_tab_enabled() else None
         else:
             video_outline_url = None
             course_updates_url = None
@@ -68,6 +73,7 @@ class CourseOverviewField(serializers.RelatedField):
             "video_outline": video_outline_url,
             "course_updates": course_updates_url,
             "course_handouts": course_handouts_url,
+            "discussion_url": discussion_url,
             "subscription_id": course_overview.clean_id(padding_char='_'),
             "courseware_access": has_access(request.user, 'load_mobile', course_overview).to_json() if request else None
         }

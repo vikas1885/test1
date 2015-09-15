@@ -205,6 +205,15 @@ class TestUserEnrollmentApi(MobileAPITestCase, MobileAuthUserTestMixin):
         course_data = response.data[0]['course']
         self.assertEquals(course_data['social_urls']['facebook'], self.course.facebook_url)
 
+    @patch.dict("django.conf.settings.FEATURES", {"ENABLE_DISCUSSION_SERVICE": True})
+    def test_discussion_url(self):
+        self.REVERSE_INFO = {'name': 'discussion_course', 'params': ['course_id']}
+        self.login_and_enroll()
+
+        response = self.api_response()
+        course_data = response.data[0]['course']
+        self.assertIsNotNone(course_data['discussion_url'])
+
 
 class CourseStatusAPITestCase(MobileAPITestCase):
     """

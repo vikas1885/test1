@@ -19,6 +19,7 @@ import newrelic.agent
 
 from edxmako.shortcuts import render_to_response
 from courseware.courses import get_course_with_access
+from openedx.core.djangoapps.content.course_overviews.utils import is_discussion_enabled
 from openedx.core.djangoapps.course_groups.cohorts import (
     is_course_cohorted,
     get_cohort_id,
@@ -27,7 +28,6 @@ from openedx.core.djangoapps.course_groups.cohorts import (
 from courseware.tabs import EnrolledTab
 from courseware.access import has_access
 from xmodule.modulestore.django import modulestore
-from ccx.overrides import get_current_ccx
 
 from django_comment_common.utils import ThreadContext
 from django_comment_client.permissions import has_permission, get_team
@@ -66,11 +66,7 @@ class DiscussionTab(EnrolledTab):
     def is_enabled(cls, course, user=None):
         if not super(DiscussionTab, cls).is_enabled(course, user):
             return False
-
-        if settings.FEATURES.get('CUSTOM_COURSES_EDX', False):
-            if get_current_ccx(course.id):
-                return False
-        return settings.FEATURES.get('ENABLE_DISCUSSION_SERVICE')
+        return is_discussion_enabled(course.id)
 
 
 def _attr_safe_json(obj):
