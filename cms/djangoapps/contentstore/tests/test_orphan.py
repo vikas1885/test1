@@ -11,6 +11,7 @@ from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.split_mongo import BlockKey
 import ddt
 import itertools
+from contextlib import contextmanager
 
 from opaque_keys.edx.locator import CourseLocator
 
@@ -149,8 +150,178 @@ class TestOrphan(TestOrphanBase):
 class TestSplitOrphan(TestOrphanBase):
     """
     Tests for split-specific orphan scenarios
+    'singleton': does not exist on other branch
     """
-    def create_course_with_orphan_on_branch(self, branch, direct_only):
+    @ddt.data(True)
+    def test_draft_orphan_singleton(self, direct_only):
+        """
+        Published             Draft
+            *                   *
+           /                   /
+          *                   *   *
+
+        Delete draft orphan
+        Published             Draft
+            *                   *
+           /                   /
+          *                   *
+
+        Delete draft orphan
+        """
+
+    @ddt.data(True, False)
+    def test_draft_orphan_not_singleton(self, direct_only):
+        """
+        Before:
+        Published             Draft
+            *                   *
+           / \                 /
+          *   *               *   *
+
+        After:
+        Published             Draft
+            *                   *
+           / \                 / \
+          *   *               *   *
+        Revert draft parent to published parent
+        """
+        branch = ModuleStoreEnum.BranchName.draft
+        store = self.store._get_modulestore_by_type(ModuleStoreEnum.Type.split)
+        course = CourseFactory.create(default_store=ModuleStoreEnum.Type.split)
+        chapter = ItemFactory.create(parent_location=course.location, category="chapter")
+        sequential = ItemFactory.create(parent_location=chapter.location, category="sequential")
+        orphan_sequential = ItemFactory.create(parent_location=chapter.location, category="sequential")
+
+        branch_explicit_course_key = course.id.for_branch(ModuleStoreEnum.BranchName.draft)
+
+        published_key = course.id.for_branch(ModuleStoreEnum.BranchName.published)
+
+        original_structure = store._lookup_course(branch_explicit_course_key).structure
+
+        new_structure = store.version_structure(
+            branch_explicit_course_key, original_structure, self.user.id
+        )
+
+        # # remove children
+        parent_key = BlockKey.from_usage_key(chapter.location)
+        child_key = BlockKey.from_usage_key(sequential.location)
+        new_structure['blocks'][parent_key].fields['children'] = [child_key]
+
+        index_entry = store._get_index_if_valid(branch_explicit_course_key)
+        store._update_head(
+            course.id,
+            index_entry,
+            branch_explicit_course_key.branch,
+            new_structure['_id'],
+        )
+
+        store.update_structure(branch_explicit_course_key, new_structure)
+
+
+
+
+
+
+    @ddt.data(True, False)
+    def test_published_orphan_singleton(self, direct_only):
+        """
+        Before:
+        Published             Draft
+            *                   *
+           /                   /
+          *   *               *
+
+        After:
+        Published             Draft
+            *                   *
+           /                   /
+          *                   *
+        Delete node from published branch
+        """
+        pass
+
+    def test_published_orphan_singleton_not_direct_only(self):
+        """
+        Before:
+        Published             Draft
+            *                   *
+           /                   / \
+          *   *               *   *
+
+        After:
+        Published             Draft
+            *                   *
+           /                   / \
+          *                   *   *
+        Delete node from published branch
+        """
+        pass
+
+    def test_published_orphan_singleton(self):
+        """
+        Before:
+        Published             Draft
+            *                   *
+           /                   / \
+          *   *               *   *
+
+        After:
+        Published             Draft
+            *                   *
+           /                   /
+          *                   *
+
+        Revert draft parent to published parent, then delete orphans from both
+        """
+        pass
+
+
+    @contextmanager
+    def assertPublishedTreeUnchanged(self):
+        """
+        The student experience shouldn't change when deleting orphans.
+        """
+        yield
+
+
+    def _walk_course_tree(self, course_key):
+        pass
+
+
+    @ddt.data(*ORPHAN_TYPES)
+    @ddt.unpack
+    def test_split_mongo_orphan_delete_special_cases(
+        self,
+        branch,
+        direct_only,
+        exists_on_other_branch,
+    ):
+        """
+        branch: which branch the orphan is on
+        direct_only: whether or not the orphan's parent is a "direct only category)
+        exists_on_other_branch: if the orphan has a corresponding xblock
+          that exists on the other branch
+        """
+        draft_orphans, published_orphans = 1, 0
+        if branch == ModuleStoreEnum.BranchName.published:
+            draft_orphans, published_orphans = 0, 1
+
+        course = self.create_course_with_orphan_on_branch_DNE_other_branch(branch, direct_only)
+        if exists_on_other_branch:
+            course = self.create_course_with_orphan_singleton(branch, direct_only)
+
+        store = self.store._get_modulestore_by_type(ModuleStoreEnum.Type.split)
+
+        self.assertOrphanCount(course.id, draft_orphans)
+        self.assertOrphanCount(course.id.for_branch('published-branch'), published_orphans)
+
+        store.delete_orphans(course.id, self.user.id)
+
+        self.assertOrphanCount(course.id, 0)
+        self.assertOrphanCount(course.id.for_branch('published-branch'), 0)
+
+
+    def create_course_with_orphan_singleton(self, branch, direct_only):
         """
         branch is the branch to create the orphan on
         direct_only is whether or not its parent is in a direct only category
@@ -224,9 +395,6 @@ class TestSplitOrphan(TestOrphanBase):
         )
         return course
 
-    def assertOrphanCount(self, course_key, number):
-        self.assertEqual(len(self.store.get_orphans(course_key)), number)
-
 
 @ddt.ddt
 class TestOrphan(TestOrphanBase):
@@ -274,91 +442,8 @@ class TestOrphan(TestOrphanBase):
         # parent are not deleted
         self.assertTrue(self.store.has_item(course.id.make_usage_key('html', "multi_parent_html")))
 
-    def test_split_mongo_orphan_delete(self):
-        self.course = self.create_course_with_orphans(ModuleStoreEnum.Type.split)
-        store = self.store._get_modulestore_by_type(ModuleStoreEnum.Type.split)
-        self.assertOrphanCount(self.course.id, 3)
-        self.assertOrphanCount(self.course.id.for_branch('published-branch'), 3)
-        store.delete_orphans(self.course.id, self.user.id)
-        self.assertOrphanCount(self.course.id, 0)
-        self.assertOrphanCount(self.course.id.for_branch('published-branch'), 0)
-
-    @ddt.data(*ORPHAN_TYPES)
-    @ddt.unpack
-    def test_split_mongo_orphan_delete_special_cases(
-        self,
-        branch,
-        direct_only,
-        exists_on_other_branch,
-    ):
-        """
-        branch: which branch the orphan is on
-        direct_only: whether or not the orphan's parent is a "direct only category)
-        exists_on_other_branch: if the orphan has a corresponding xblock
-          that exists on the other branch
-        """
-        draft_orphans, published_orphans = 1, 0
-        if branch == ModuleStoreEnum.BranchName.published:
-            draft_orphans, published_orphans = 0, 1
-
-        course = self.create_course_with_orphan_on_branch_DNE_other_branch(branch, direct_only)
-        if exists_on_other_branch:
-            course = self.create_course_with_orphan_on_branch(branch, direct_only)
-
-        store = self.store._get_modulestore_by_type(ModuleStoreEnum.Type.split)
-
-        self.assertOrphanCount(course.id, draft_orphans)
-        self.assertOrphanCount(course.id.for_branch('published-branch'), published_orphans)
-
-        store.delete_orphans(course.id, self.user.id)
-
-        self.assertOrphanCount(course.id, 0)
-        self.assertOrphanCount(course.id.for_branch('published-branch'), 0)
-
-
-    def test_split_mongo_orphan_delete_2(self):
-        course = CourseFactory.create(default_store=ModuleStoreEnum.Type.split)
-        chapter = ItemFactory.create(category='chapter', parent=course)
-        sequential = ItemFactory.create(category='sequential', parent=chapter)
-        vertical = ItemFactory.create(category='vertical', parent=sequential)
-        html = ItemFactory.create(category='html', parent=vertical)
-
-        pub = course.id.for_branch('published-branch')
-        course_id = course.id
-        store = self.store._get_modulestore_by_type('split')
-
-        chapter_key = BlockKey.from_usage_key(chapter.location)
-
-        original_structure = store._lookup_course(pub).structure
-
-        new_structure = store.version_structure(pub, original_structure, self.user.id)
-
-        new_structure['blocks'][chapter_key].fields['children'] = []
-        parent_block_keys = store._get_parents_from_structure(chapter.location, original_structure)
-        parent_block_key = parent_block_key
-        store.decache_block(chapter.location.course_key, new_id, parent_block_key)
-
-        index_entry = store._get_index_if_valid(course.id)
-        new_id = new_structure['_id']
-
-        # update index if appropriate and structures
-        store.update_structure(usage_locator.course_key, new_structure)
-
-        if index_entry is not None:
-            # update the index entry if appropriate
-            store._update_head(course.id, index_entry, 'published-branch', new_id)
-            result = usage_locator.course_key.for_version(new_id)
-        else:
-            result = CourseLocator(version_guid=new_id)
-
-
-
-
-        # import ipdb; ipdb.set_trace()
-
-
     @ddt.data(ModuleStoreEnum.Type.split, ModuleStoreEnum.Type.mongo)
-    def test_not_permitted(self):
+    def test_not_permitted(self, default_store):
         """
         Test that auth restricts get and delete appropriately
         """
