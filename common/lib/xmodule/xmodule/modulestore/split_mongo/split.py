@@ -1120,6 +1120,15 @@ class SplitMongoModuleStore(SplitBulkWriteMixin, ModuleStoreWriteBase):
         else:
             return []
 
+    def has_path_to_root(self, xblock, course):
+        """ Check recursively if an xblock has a path to the course root """
+        xblock_parents = self._get_parents_from_structure(xblock, course.structure)
+        if len(xblock_parents) == 0 and xblock.type in ["course", "library"]:
+            # Found, xblock has the path to the root
+            return True
+
+        return any(self.has_path_to_root(xblock_parent, course) for xblock_parent in xblock_parents)
+
     def get_parent_location(self, locator, **kwargs):
         """
         Return the location (Locators w/ block_ids) for the parent of this location in this
@@ -1133,9 +1142,19 @@ class SplitMongoModuleStore(SplitBulkWriteMixin, ModuleStoreWriteBase):
             raise ItemNotFoundError(locator)
 
         course = self._lookup_course(locator.course_key)
-        parent_ids = self._get_parents_from_structure(BlockKey.from_usage_key(locator), course.structure)
+        all_parent_ids = self._get_parents_from_structure(BlockKey.from_usage_key(locator), course.structure)
+
+        # Check and verify the found parent_ids are not orphans; Remove parent which has no valid path
+        # to the course root
+        parent_ids = [
+            valid_parent
+            for valid_parent in all_parent_ids
+            if self.has_path_to_root(valid_parent, course)
+        ]
+
         if len(parent_ids) == 0:
             return None
+
         # find alphabetically least
         parent_ids.sort(key=lambda parent: (parent.type, parent.id))
         return BlockUsageLocator.make_relative(
