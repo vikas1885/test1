@@ -155,12 +155,13 @@ class TestSplitOrphan(TestOrphanBase):
     @ddt.data(True)
     def test_draft_orphan_singleton(self, direct_only):
         """
+        Before:
         Published             Draft
             *                   *
            /                   /
           *                   *   *
 
-        Delete draft orphan
+        After:
         Published             Draft
             *                   *
            /                   /
@@ -185,42 +186,7 @@ class TestSplitOrphan(TestOrphanBase):
           *   *               *   *
         Revert draft parent to published parent
         """
-        branch = ModuleStoreEnum.BranchName.draft
-        store = self.store._get_modulestore_by_type(ModuleStoreEnum.Type.split)
-        course = CourseFactory.create(default_store=ModuleStoreEnum.Type.split)
-        chapter = ItemFactory.create(parent_location=course.location, category="chapter")
-        sequential = ItemFactory.create(parent_location=chapter.location, category="sequential")
-        orphan_sequential = ItemFactory.create(parent_location=chapter.location, category="sequential")
-
-        branch_explicit_course_key = course.id.for_branch(ModuleStoreEnum.BranchName.draft)
-
-        published_key = course.id.for_branch(ModuleStoreEnum.BranchName.published)
-
-        original_structure = store._lookup_course(branch_explicit_course_key).structure
-
-        new_structure = store.version_structure(
-            branch_explicit_course_key, original_structure, self.user.id
-        )
-
-        # # remove children
-        parent_key = BlockKey.from_usage_key(chapter.location)
-        child_key = BlockKey.from_usage_key(sequential.location)
-        new_structure['blocks'][parent_key].fields['children'] = [child_key]
-
-        index_entry = store._get_index_if_valid(branch_explicit_course_key)
-        store._update_head(
-            course.id,
-            index_entry,
-            branch_explicit_course_key.branch,
-            new_structure['_id'],
-        )
-
-        store.update_structure(branch_explicit_course_key, new_structure)
-
-
-
-
-
+        pass
 
     @ddt.data(True, False)
     def test_published_orphan_singleton(self, direct_only):
@@ -275,18 +241,24 @@ class TestSplitOrphan(TestOrphanBase):
         """
         pass
 
-
     @contextmanager
-    def assertPublishedTreeUnchanged(self):
+    def assertPublishedTreeUnchanged(self, course_key):
         """
         The student experience shouldn't change when deleting orphans.
         """
+        published_item_ids = self._walk_course_tree(
+            course_key.for_branch(ModuleStoreEnum.BranchName.published)
+        )
         yield
-
+        self.assertEqual(
+            published_item_ids,
+            self._walk_course_tree(
+                course_key.for_branch(ModuleStoreEnum.BranchName.published)
+            )
+        )
 
     def _walk_course_tree(self, course_key):
         pass
-
 
     @ddt.data(*ORPHAN_TYPES)
     @ddt.unpack
@@ -319,7 +291,6 @@ class TestSplitOrphan(TestOrphanBase):
 
         self.assertOrphanCount(course.id, 0)
         self.assertOrphanCount(course.id.for_branch('published-branch'), 0)
-
 
     def create_course_with_orphan_singleton(self, branch, direct_only):
         """
@@ -357,7 +328,7 @@ class TestSplitOrphan(TestOrphanBase):
 
         return course
 
-    def create_course_with_orphan_on_branch_DNE_other_branch(self, branch, direct_only):
+    def create_course_with_orphan_on_branch_not_singleton(self, branch, direct_only):
         """
         Tests that if there are orphans only on the published branch,
         running delete orphans with a course key that specifies
