@@ -216,6 +216,14 @@ CORS_ORIGIN_WHITELIST = ()
 CORS_ORIGIN_ALLOW_ALL = True
 
 
+########################## Cache #######################
+
+# lms.course_blocks needs to be defined for courseware and dashboard search to work
+CACHES['lms.course_blocks'] = {
+    'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+}
+
+
 #####################################################################
 # See if the developer has any local overrides.
 try:
