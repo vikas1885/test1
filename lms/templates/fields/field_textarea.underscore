@@ -1,6 +1,10 @@
 <div class="wrapper-u-field">
     <div class="u-field-header">
-        <label class="u-field-title" for="u-field-textarea-<%- id %>" id="u-field-title-<%- id %>" aria-describedby="u-field-message-help-<%- id %>"></label>
+        <% if (mode === 'edit') { %>
+            <label class="u-field-title" for="u-field-textarea-<%- id %>" id="u-field-title-<%- id %>" aria-describedby="u-field-message-help-<%- id %>"></label>
+        <% } else { %>
+            <span class="u-field-title" id="u-field-title-<%- id %>" aria-describedby="u-field-message-help-<%- id %>"></span>
+        <% } %>
         <% if (messagePosition === 'header') { %>
             <span class="u-field-message" id="u-field-message-<%- id %>">
                 <span class="u-field-message-notification" aria-live="polite"></span>
