@@ -17,14 +17,15 @@ from discussion_api.api import (
     delete_thread,
     delete_comment,
     get_comment_list,
+    get_response_comments,
     get_course,
     get_course_topics,
     get_thread,
     get_thread_list,
     update_comment,
     update_thread,
-)
-from discussion_api.forms import CommentListGetForm, ThreadListGetForm
+    )
+from discussion_api.forms import CommentListGetForm, ThreadListGetForm, _PaginationForm
 from openedx.core.lib.api.view_utils import DeveloperErrorViewMixin
 
 
@@ -418,6 +419,15 @@ class CommentViewSet(_ViewMixin, DeveloperErrorViewMixin, ViewSet):
                 form.cleaned_data["mark_as_read"]
             )
         )
+
+    def retrieve(self, request, comment_id=None):
+        """
+        Implements the GET method for comments against response ID
+        """
+        form = _PaginationForm(request.GET)
+        if not form.is_valid():
+            raise ValidationError(form.errors)
+        return Response(get_response_comments(request, comment_id, form.cleaned_data["page"], form.cleaned_data["page_size"]))
 
     def create(self, request):
         """
