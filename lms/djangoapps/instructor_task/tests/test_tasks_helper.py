@@ -1011,7 +1011,7 @@ class MockDefaultStorage(object):
         return open(file_name)
 
 
-@patch('instructor_task.tasks_helper.DefaultStorage', new=MockDefaultStorage)
+@patch('instructor_task.tasks_helper.DefaultStorage', new=MockDefaultStorage, autospec=True)
 class TestCohortStudents(TestReportMixin, InstructorTaskCourseTestCase):
     """
     Tests that bulk student cohorting works.
@@ -1238,7 +1238,7 @@ class TestCohortStudents(TestReportMixin, InstructorTaskCourseTestCase):
 
 
 @ddt.ddt
-@patch('instructor_task.tasks_helper.DefaultStorage', new=MockDefaultStorage)
+@patch('instructor_task.tasks_helper.DefaultStorage', new=MockDefaultStorage, autospec=True)
 class TestGradeReportEnrollmentAndCertificateInfo(TestReportMixin, InstructorTaskModuleTestCase):
     """
     Test that grade report has correct user enrolment, verification, and certificate information.
