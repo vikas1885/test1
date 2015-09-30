@@ -118,6 +118,7 @@ class VideoEventsTest(VideoEventsTestMixin):
             'agent',
             'host',
             'ip',
+            'remote_addr',
             'event',
             'session'
         )
@@ -313,6 +314,7 @@ class VideoBumperEventsTest(VideoEventsTestMixin):
             'agent',
             'host',
             'ip',
+            'remote_addr',
             'event',
             'session'
         )

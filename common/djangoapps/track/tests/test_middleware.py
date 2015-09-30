@@ -60,6 +60,7 @@ class TrackMiddlewareTestCase(TestCase):
             'session': '',
             'username': '',
             'ip': '127.0.0.1',
+            'remote_addr': '127.0.0.1',
             'host': 'testserver',
             'agent': '',
             'path': '/courses/',

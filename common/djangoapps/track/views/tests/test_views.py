@@ -160,6 +160,7 @@ class TestTrackViews(EventTrackingTestCase):
             'referer': '',
             'username': 'anonymous',
             'ip': '127.0.0.1',
+            'remote_addr': '127.0.0.1',
             'event_source': 'server',
             'event_type': str(sentinel.event_type),
             'event': '{}',
