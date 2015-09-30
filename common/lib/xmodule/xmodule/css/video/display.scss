@@ -275,6 +275,18 @@
         }
       }
 
+      .control {
+        @extend %control;
+
+        .icon-fallback-img {
+
+          .icon {
+            width: 1em;
+            height: 1em;
+          }
+        }
+      }
+
       .slider {
         @include clearfix();
         @include transform(scaleY(0.5) translate3d(0, 50%, 0));
@@ -341,7 +353,6 @@
         }
 
         .video_control {
-          @extend %control;
 
           &:focus {
             @extend %ui-depth4;
@@ -352,13 +363,34 @@
           }
 
           &.play {
+
+            .icon-fallback-img {
+
+              .icon {
+                background: url('#{$static-path}/images/fontawesome/play.svg') center center no-repeat;
+              }
+            }
           }
 
           &.pause {
+
+            .icon-fallback-img {
+
+              .icon {
+                background: url('#{$static-path}/images/fontawesome/pause.svg') center center no-repeat;
+              }
+            }
           }
 
           &.skip {
             white-space: nowrap;
+
+            .icon-fallback-img {
+
+              .icon {
+                background: url('#{$static-path}/images/fontawesome/step-forward.svg') center center no-repeat;
+              }
+            }
           }
         }
 
@@ -469,7 +501,6 @@
             }
 
             .speed-link {
-              @extend %control;
               @include text-align(left);
               display: block;
               width: 100%;
@@ -477,10 +508,16 @@
           }
 
           .speed-button {
-            @extend %control;
             @include clearfix();
             min-width: 116px;
             text-indent: 0;
+
+            .icon-fallback-img {
+
+              .icon {
+                background: url('#{$static-path}/images/fontawesome/caret-right.svg') center center no-repeat;
+              }
+            }
 
             @media (max-width: 1120px) {
               min-width: 0;
@@ -520,7 +557,13 @@
           position: relative;
 
           .control {
-            @extend %control;
+
+            .icon-fallback-img {
+
+              .icon {
+                background: url('#{$static-path}/images/fontawesome/volume-up.svg') center center no-repeat;
+              }
+            }
           }
 
           &.is-opened {
@@ -538,7 +581,6 @@
           }
 
           & > a {
-            @extend %control;
             @include clearfix();
           }
 
@@ -591,12 +633,16 @@
         }
 
         .add-fullscreen {
-          @extend %control;
+
+          .icon-fallback-img {
+
+            .icon {
+              background: url('#{$static-path}/images/fontawesome/arrows-alt.svg') center center no-repeat;
+            }
+          }
         }
 
-
         .quality-control {
-          @extend %control;
 
           &.active {
             color: rgb(14, 166, 236); // UXPL primary accent
@@ -610,7 +656,6 @@
         .lang {
 
           & > .hide-subtitles {
-            @extend %control;
             @include transition(none);
 
             &.off {
