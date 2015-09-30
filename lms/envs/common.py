@@ -1277,7 +1277,8 @@ main_vendor_js = base_vendor_js + [
     'js/vendor/swfobject/swfobject.js',
     'js/vendor/jquery.ba-bbq.min.js',
     'js/vendor/afontgarde/modernizr.fontface-generatedcontent.js',
-    'js/vendor/afontgarde/afontgarde.js'
+    'js/vendor/afontgarde/afontgarde.js',
+    'js/vendor/afontgarde/edx-icons.js'
 ]
 
 # Common files used by both RequireJS code and non-RequireJS code
