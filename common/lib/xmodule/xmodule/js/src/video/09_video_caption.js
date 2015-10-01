@@ -39,7 +39,7 @@ function (Sjson, AsyncProcess) {
             '<div class="lang menu-container">',
                 '<button class="control hide-subtitles" aria-disabled="false" aria-pressed="true">',
                     '<span class="icon-fallback-img">',
-                        '<span class="icon fa fa-list-alt" aria-hidden="true"></span>',
+                        '<span class="icon fa fa-quote-left" aria-hidden="true"></span>',
                         '<span class="text control-text">',
                             gettext('Turn off transcript'),
                         '</span>',
