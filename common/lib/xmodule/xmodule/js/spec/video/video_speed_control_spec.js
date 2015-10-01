@@ -43,14 +43,6 @@
                         );
                     });
                 });
-
-                it('add ARIA attributes to speed control', function () {
-                    var speedControl = $('.speeds>.speed-link');
-
-                    expect(speedControl).toHaveAttrs({
-                        'aria-disabled': 'false'
-                    });
-                });
             });
 
             describe('when running on touch based device', function () {

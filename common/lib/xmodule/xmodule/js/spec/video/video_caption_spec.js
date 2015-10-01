@@ -1113,7 +1113,7 @@
                 });
 
                 it('changes ARIA attribute of caption control', function () {
-                    expect($('a.hide-subtitles'))
+                    expect($('.hide-subtitles'))
                         .toHaveAttr('title', 'Turn on captions');
                 });
             });
@@ -1130,7 +1130,7 @@
                 });
 
                 it('changes ARIA attribute of caption control', function () {
-                    expect($('a.hide-subtitles'))
+                    expect($('.hide-subtitles'))
                         .toHaveAttr('title', 'Turn off captions');
                 });
 
