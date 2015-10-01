@@ -30,20 +30,18 @@
 
                 it('create the caption element', function () {
                     state = jasmine.initializePlayer();
-                    expect($('.video')).toContain('ol.subtitles');
+                    expect($('.video')).toContain('.subtitles');
                 });
 
                 it('add caption control to video player', function () {
                     state = jasmine.initializePlayer();
-                    expect($('.video')).toContain('a.hide-subtitles');
+                    expect($('.video')).toContain('.hide-subtitles');
                 });
 
                 it('add ARIA attributes to caption control', function () {
                     state = jasmine.initializePlayer();
-                    var captionControl = $('a.hide-subtitles');
+                    var captionControl = $('.hide-subtitles');
                     expect(captionControl).toHaveAttrs({
-                        'role': 'button',
-                        'title': 'Turn off captions',
                         'aria-disabled': 'false'
                     });
                 });
