@@ -7,10 +7,10 @@ import unittest
 
 from django.contrib.auth.models import User
 from django.db import connection, IntegrityError
-from django.db.transaction import commit_on_success, TransactionManagementError
+from django.db.transaction import atomic, TransactionManagementError
 from django.test import TestCase, TransactionTestCase
 
-from util.db import commit_on_success_with_read_committed, generate_int_id
+from util.db import atomic_with_read_committed, generate_int_id
 
 
 @ddt.ddt
@@ -26,8 +26,8 @@ class TransactionIsolationLevelsTestCase(TransactionTestCase):
     """
 
     @ddt.data(
-        (commit_on_success, IntegrityError, None, True),
-        (commit_on_success_with_read_committed, type(None), False, True),
+        (atomic, IntegrityError, None, True),
+        (atomic_with_read_committed, type(None), False, True),
     )
     @ddt.unpack
     def test_concurrent_requests(self, transaction_decorator, exception_class, created_in_1, created_in_2):
@@ -90,15 +90,15 @@ class TransactionIsolationLevelsTestCase(TransactionTestCase):
             """Just return."""
             return
 
-        commit_on_success_with_read_committed(do_nothing)()
+        atomic_with_read_committed(do_nothing)()
 
-        with commit_on_success():
-            commit_on_success_with_read_committed(do_nothing)()
+        with atomic():
+            atomic_with_read_committed(do_nothing)()
 
         with self.assertRaises(TransactionManagementError):
-            with commit_on_success():
-                with commit_on_success():
-                    commit_on_success_with_read_committed(do_nothing)()
+            with atomic():
+                with atomic():
+                    atomic_with_read_committed(do_nothing)()
 
 
 @ddt.ddt

@@ -143,15 +143,15 @@ def override_field_for_ccx(ccx, block, name, value):
 
     if not override:
         try:
-            override = CcxFieldOverride.objects.create(
-                ccx=ccx,
-                location=block.location,
-                field=name,
-                value=serialized_value
-            )
-            _get_overrides_for_ccx(ccx).setdefault(block.location, {})[name + "_id"] = override.id
+            with transaction.atomic():
+                override = CcxFieldOverride.objects.create(
+                    ccx=ccx,
+                    location=block.location,
+                    field=name,
+                    value=serialized_value
+                )
+                _get_overrides_for_ccx(ccx).setdefault(block.location, {})[name + "_id"] = override.id
         except IntegrityError:
-            transaction.commit()
             kwargs = {'ccx': ccx, 'location': block.location, 'field': name}
             override = CcxFieldOverride.objects.get(**kwargs)
             override_has_changes = serialized_value != override.value

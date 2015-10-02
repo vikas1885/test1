@@ -79,7 +79,7 @@ from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from opaque_keys.edx.keys import CourseKey, UsageKey
 from instructor.enrollment import uses_shib
 
-from util.db import commit_on_success_with_read_committed
+from util.db import atomic_with_read_committed
 
 import survey.utils
 import survey.views
@@ -317,7 +317,7 @@ def chat_settings(course, user):
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
 @ensure_valid_course_key
-@commit_on_success_with_read_committed
+@atomic_with_read_committed
 def index(request, course_id, chapter=None, section=None,
           position=None):
     """
@@ -925,18 +925,18 @@ def course_about(request, course_id):
 
 @login_required
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
-@transaction.commit_manually
+@transaction.atomic
 @ensure_valid_course_key
 def progress(request, course_id, student_id=None):
     """
-    Wraps "_progress" with the manual_transaction context manager just in case
+    Wraps "_progress" with the transaction.atomic context manager just in case
     there are unanticipated errors.
     """
 
     course_key = SlashSeparatedCourseKey.from_deprecated_string(course_id)
 
     with modulestore().bulk_operations(course_key):
-        with grades.manual_transaction():
+        with transaction.atomic():
             return _progress(request, course_key, student_id)
 
 
@@ -1026,7 +1026,7 @@ def _progress(request, course_key, student_id):
                     'download_url': None
                 })
 
-    with grades.manual_transaction():
+    with transaction.atomic():
         response = render_to_response('courseware/progress.html', context)
 
     return response

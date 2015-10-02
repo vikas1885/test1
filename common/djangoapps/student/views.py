@@ -89,7 +89,7 @@ import track.views
 
 import dogstats_wrapper as dog_stats_api
 
-from util.db import commit_on_success_with_read_committed
+from util.db import atomic_with_read_committed
 from util.json_request import JsonResponse
 from util.bad_request_rate_limiter import BadRequestRateLimiter
 from util.milestones_helpers import (
@@ -906,7 +906,7 @@ def _credit_statuses(user, course_enrollments):
 
 
 @require_POST
-@commit_on_success_with_read_committed
+@atomic_with_read_committed
 def change_enrollment(request, check_access=True):
     """
     Modify the enrollment status for the logged-in user.
@@ -2133,68 +2133,67 @@ def do_email_change_request(user, new_email, activation_key=None):
 
 
 @ensure_csrf_cookie
-@transaction.commit_manually
 def confirm_email_change(request, key):  # pylint: disable=unused-argument
     """
     User requested a new e-mail. This is called when the activation
     link is clicked. We confirm with the old e-mail, and update
     """
+    response = None
     try:
-        try:
-            pec = PendingEmailChange.objects.get(activation_key=key)
-        except PendingEmailChange.DoesNotExist:
-            response = render_to_response("invalid_email_key.html", {})
-            transaction.rollback()
-            return response
+        # If we want to rollback if there is an exception, do not return the response
+        # in the block, just create a response object and re-raise so the the atomic
+        # decorator does the rollback.
+        with transaction.atomic():
+            try:
+                pec = PendingEmailChange.objects.get(activation_key=key)
+            except PendingEmailChange.DoesNotExist:
+                response = render_to_response("invalid_email_key.html", {})
+                raise
 
-        user = pec.user
-        address_context = {
-            'old_email': user.email,
-            'new_email': pec.new_email
-        }
+            user = pec.user
+            address_context = {
+                'old_email': user.email,
+                'new_email': pec.new_email
+            }
 
-        if len(User.objects.filter(email=pec.new_email)) != 0:
-            response = render_to_response("email_exists.html", {})
-            transaction.rollback()
-            return response
+            if len(User.objects.filter(email=pec.new_email)) != 0:
+                response = render_to_response("email_exists.html", {})
+                return response
+            else:
+                subject = render_to_string('emails/email_change_subject.txt', address_context)
+                subject = ''.join(subject.splitlines())
+                message = render_to_string('emails/confirm_email_change.txt', address_context)
+                u_prof = UserProfile.objects.get(user=user)
+                meta = u_prof.get_meta()
+                if 'old_emails' not in meta:
+                    meta['old_emails'] = []
+                meta['old_emails'].append([user.email, datetime.datetime.now(UTC).isoformat()])
+                u_prof.set_meta(meta)
+                u_prof.save()
+                # Send it to the old email...
+                try:
+                    user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+                except Exception:    # pylint: disable=broad-except
+                    log.warning('Unable to send confirmation email to old address', exc_info=True)
+                    response = render_to_response("email_change_failed.html", {'email': user.email})
+                    raise
 
-        subject = render_to_string('emails/email_change_subject.txt', address_context)
-        subject = ''.join(subject.splitlines())
-        message = render_to_string('emails/confirm_email_change.txt', address_context)
-        u_prof = UserProfile.objects.get(user=user)
-        meta = u_prof.get_meta()
-        if 'old_emails' not in meta:
-            meta['old_emails'] = []
-        meta['old_emails'].append([user.email, datetime.datetime.now(UTC).isoformat()])
-        u_prof.set_meta(meta)
-        u_prof.save()
-        # Send it to the old email...
-        try:
-            user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-        except Exception:    # pylint: disable=broad-except
-            log.warning('Unable to send confirmation email to old address', exc_info=True)
-            response = render_to_response("email_change_failed.html", {'email': user.email})
-            transaction.rollback()
-            return response
+                user.email = pec.new_email
+                user.save()
+                pec.delete()
+                # And send it to the new email...
+                try:
+                    user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+                except Exception:  # pylint: disable=broad-except
+                    log.warning('Unable to send confirmation email to new address', exc_info=True)
+                    response = render_to_response("email_change_failed.html", {'email': pec.new_email})
+                    raise
 
-        user.email = pec.new_email
-        user.save()
-        pec.delete()
-        # And send it to the new email...
-        try:
-            user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-        except Exception:  # pylint: disable=broad-except
-            log.warning('Unable to send confirmation email to new address', exc_info=True)
-            response = render_to_response("email_change_failed.html", {'email': pec.new_email})
-            transaction.rollback()
-            return response
-
-        response = render_to_response("email_change_successful.html", address_context)
-        transaction.commit()
-        return response
+                response = render_to_response("email_change_successful.html", address_context)
+                return response
     except Exception:  # pylint: disable=broad-except
-        # If we get an unexpected exception, be sure to rollback the transaction
-        transaction.rollback()
+        if response is not None:
+            return response
         raise
 
 

@@ -19,6 +19,7 @@ from courseware.courses import get_problems_in_section
 from xmodule.modulestore.django import modulestore
 from opaque_keys.edx.keys import UsageKey
 from instructor_task.models import InstructorTask, PROGRESS
+from util.db import unnested_atomic
 
 
 log = logging.getLogger(__name__)
@@ -47,13 +48,6 @@ def _reserve_task(course_id, task_type, task_key, task_input, requester):
     Throws AlreadyRunningError if the task is already in progress.
     Includes the creation of an arbitrary value for task_id, to be
     submitted with the task call to celery.
-
-    The InstructorTask.create method makes sure the InstructorTask entry is committed.
-    When called from any view that is wrapped by TransactionMiddleware,
-    and thus in a "commit-on-success" transaction, an autocommit buried within here
-    will cause any pending transaction to be committed by a successful
-    save here.  Any future database operations will take place in a
-    separate transaction.
 
     Note that there is a chance of a race condition here, when two users
     try to run the same task at almost exactly the same time.  One user
@@ -328,17 +322,10 @@ def submit_task(request, task_type, task_class, course_key, task_input, task_key
     asynchronously, using the specified `task_class` and using the task_id constructed for it.
 
     `AlreadyRunningError` is raised if the task is already running.
-
-    The _reserve_task method makes sure the InstructorTask entry is committed.
-    When called from any view that is wrapped by TransactionMiddleware,
-    and thus in a "commit-on-success" transaction, an autocommit buried within here
-    will cause any pending transaction to be committed by a successful
-    save here.  Any future database operations will take place in a
-    separate transaction.
-
     """
     # check to see if task is already running, and reserve it otherwise:
-    instructor_task = _reserve_task(course_key, task_type, task_key, task_input, request.user)
+    with unnested_atomic():
+        instructor_task = _reserve_task(course_key, task_type, task_key, task_input, request.user)
 
     # submit task:
     task_id = instructor_task.task_id

@@ -866,6 +866,7 @@ class CourseEnrollment(models.Model):
         ).format(self.user, self.course_id, self.created, self.is_active)
 
     @classmethod
+    @transaction.atomic():
     def get_or_create_enrollment(cls, user, course_key):
         """
         Create an enrollment for a user in a class. By default *this enrollment
@@ -909,16 +910,11 @@ class CourseEnrollment(models.Model):
                 (
                     "An integrity error occurred while getting-or-creating the enrollment"
                     "for course key %s and student %s. This can occur if two processes try to get-or-create "
-                    "the enrollment at the same time and the database is set to REPEATABLE READ. We will try "
-                    "committing the transaction and retrying."
+                    "the enrollment at the same time and the database is set to REPEATABLE READ."
                 ),
                 course_key, user
             )
-            transaction.commit()
-            enrollment = CourseEnrollment.objects.get(
-                user=user,
-                course_id=course_key,
-            )
+            raise
 
         return enrollment
 
