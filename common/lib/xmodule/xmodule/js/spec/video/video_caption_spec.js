@@ -170,7 +170,7 @@
 
                         $('.langs-list li').each(function(index) {
                             var code = $(this).data('lang-code'),
-                                link = $(this).find('a'),
+                                link = $(this).find('.control'),
                                 label = link.text();
 
                             expect(code).toBeInArray(langCodes);
@@ -181,7 +181,7 @@
                     it('when clicking on link with new language', function () {
                         state = jasmine.initializePlayer();
                         var Caption = state.videoCaption,
-                            link = $('.langs-list li[data-lang-code="de"] .control-lang');
+                            link = $('.langs-list li[data-lang-code="de"] .control');
 
                         spyOn(Caption, 'fetchCaption');
                         spyOn(state.storage, 'setItem');
