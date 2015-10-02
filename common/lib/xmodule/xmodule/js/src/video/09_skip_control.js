@@ -55,7 +55,7 @@ function() {
          * initial configuration.
          */
         render: function() {
-            this.state.el.find('.vcr a').after(this.el);
+            this.state.el.find('.vcr .control').after(this.el);
         },
 
         /** Bind any necessary function callbacks to DOM events. */

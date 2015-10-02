@@ -181,7 +181,7 @@
                     it('when clicking on link with new language', function () {
                         state = jasmine.initializePlayer();
                         var Caption = state.videoCaption,
-                            link = $('.langs-list li[data-lang-code="de"] a');
+                            link = $('.langs-list li[data-lang-code="de"] .control-lang');
 
                         spyOn(Caption, 'fetchCaption');
                         spyOn(state.storage, 'setItem');
@@ -199,7 +199,7 @@
                     it('when clicking on link with current language', function () {
                         state = jasmine.initializePlayer();
                         var Caption = state.videoCaption,
-                            link = $('.langs-list li[data-lang-code="en"] a');
+                            link = $('.langs-list li[data-lang-code="en"] .control-lang');
 
                         spyOn(Caption, 'fetchCaption');
                         spyOn(state.storage, 'setItem');
@@ -1111,11 +1111,6 @@
                 it('hide the caption', function () {
                     expect(state.el).toHaveClass('closed');
                 });
-
-                it('changes ARIA attribute of caption control', function () {
-                    expect($('.hide-subtitles'))
-                        .toHaveAttr('title', 'Turn on captions');
-                });
             });
 
             describe('when the caption is hidden', function () {
@@ -1127,11 +1122,6 @@
 
                 it('show the caption', function () {
                     expect(state.el).not.toHaveClass('closed');
-                });
-
-                it('changes ARIA attribute of caption control', function () {
-                    expect($('.hide-subtitles'))
-                        .toHaveAttr('title', 'Turn off captions');
                 });
 
                 // Test turned off due to flakiness (11/25/13)
