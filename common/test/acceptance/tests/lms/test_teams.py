@@ -1085,7 +1085,6 @@ class CreateTeamTest(TeamFormActions):
         self.fill_create_or_edit_form()
         self.team_management_page.try_double_create()
 
-        team_page = TeamPage(self.browser, self.course_id)
         self.teams_page.click_specific_topic("Example Topic")
         self.teams_page.verify_topic_team_count(1)
 
