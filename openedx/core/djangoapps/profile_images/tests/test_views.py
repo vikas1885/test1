@@ -219,6 +219,46 @@ class ProfileImageViewPostTestCase(ProfileImageEndpointMixin, APITestCase):
 
         self.check_upload_event_emitted(old=TEST_UPLOAD_DT, new=TEST_UPLOAD_DT2)
 
+    def test_upload_jpeg_mimetype(self, mock_log):
+        """
+        Test that a user can upload raw content with the appropriate mimetype
+        """
+        with make_image_file() as image_file:
+            data = image_file.read()
+            response = self.client.post(
+                self.url,
+                data,
+                content_type='image/jpeg',
+                HTTP_CONTENT_DISPOSITION='attachment;filename=filename.jpg',
+            )
+            self.check_response(response, 204)
+            self.check_images()
+            self.check_has_profile_image()
+        mock_log.info.assert_called_once_with(
+            LOG_MESSAGE_CREATE,
+            {'image_names': get_profile_image_names(self.user.username).values(), 'user_id': self.user.id}
+        )
+        self.check_upload_event_emitted
+
+    def test_upload_tiff_mimetype(self, mock_log):
+        """
+        Test that uploading an unsupported image as raw content fails with an
+        HTTP 415 Error.
+        """
+        with make_image_file() as image_file:
+            data = image_file.read()
+            response = self.client.post(
+                self.url,
+                data,
+                content_type='image/tiff',
+                HTTP_CONTENT_DISPOSITION='attachment;filename=filename.tiff',
+            )
+            self.check_response(response, 415)
+            self.check_images(False)
+            self.check_has_profile_image(False)
+        self.assertFalse(mock_log.info.called)
+        self.assert_no_events_were_emitted()
+
     def test_upload_other(self, mock_log):
         """
         Test that an authenticated user cannot POST to another user's upload
