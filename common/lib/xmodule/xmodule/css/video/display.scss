@@ -284,6 +284,7 @@ html:not('.afontgarde') .icon-fallback-img {
 
       %control {
         display: inline-block;
+        vertical-align: middle;
         margin: 0;
         padding: ($baseline / 2) ($baseline / 1.5); // 10px 15px
         border: 0;
@@ -291,7 +292,8 @@ html:not('.afontgarde') .icon-fallback-img {
         box-shadow: none;
         text-shadow: none;
         color: rgb(207, 216, 220); // UXPL grayscale-cool light
-        font-weight: 700;
+        font-family: $body-font-family;
+        font-weight: 600;
         font-size: em(14);
         line-height: 100%;
 
@@ -336,10 +338,6 @@ html:not('.afontgarde') .icon-fallback-img {
         -moz-transition: -moz-transform 0.7s ease-in-out;
         -ms-transition: -ms-transform 0.7s ease-in-out;
         transition: transform 0.7s ease-in-out;
-
-        &:hover,
-        &:focus {
-        }
 
         .ui-widget-header {
           background: rgb(142, 62, 99); // UXPL secondary dark
@@ -392,15 +390,6 @@ html:not('.afontgarde') .icon-fallback-img {
             position: relative;
           }
 
-          &:empty {
-          }
-
-          &.play {
-          }
-
-          &.pause {
-          }
-
           &.skip {
             white-space: nowrap;
           }
@@ -436,7 +425,6 @@ html:not('.afontgarde') .icon-fallback-img {
         }
 
         .menu-container {
-          float: left;
           position: relative;
 
           .menu {
@@ -445,6 +433,7 @@ html:not('.afontgarde') .icon-fallback-img {
             position: absolute;
             display: none;
             bottom: ($baseline * 1.5) + 4; // 34px to make it flush, meh
+            @include right(0); // right-align menus since this whole collection is on the right
             width: ($baseline * 6); // 120px
             margin: 0;
             padding: 0;
@@ -498,7 +487,8 @@ html:not('.afontgarde') .icon-fallback-img {
           }
         }
 
-        .speeds {
+        .speeds,
+        .lang {
 
           .control {
 
@@ -520,7 +510,8 @@ html:not('.afontgarde') .icon-fallback-img {
         }
 
         .speeds,
-        .lang {
+        .lang,
+        .grouped-controls {
           display: inline-block;
 
           .speed-button {
@@ -607,9 +598,6 @@ html:not('.afontgarde') .icon-fallback-img {
           }
         }
 
-        .add-fullscreen {
-        }
-
         .quality-control {
 
           &.active {
@@ -621,14 +609,17 @@ html:not('.afontgarde') .icon-fallback-img {
           }
         }
 
-        .lang {
-
-          & > .hide-subtitles {
-            @include transition(none);
+        .toggle-transcript {
 
             &.is-active {
               color: rgb(14, 166, 236); // UXPL primary accent
             }
+        }
+
+        .lang {
+
+          & > .hide-subtitles {
+            @include transition(none);
           }
         }
       }

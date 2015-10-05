@@ -25,7 +25,9 @@ function (Sjson, AsyncProcess) {
 
         _.bindAll(this, 'toggle', 'onMouseEnter', 'onMouseLeave', 'onMovement',
             'onContainerMouseEnter', 'onContainerMouseLeave', 'fetchCaption',
-            'onResize', 'pause', 'play', 'onCaptionUpdate', 'onCaptionHandler', 'destroy'
+            'onResize', 'pause', 'play', 'onCaptionUpdate', 'onCaptionHandler', 'destroy',
+            'handleKeypress', 'openLanguageMenu', 'closeLanguageMenu',
+            'previousLanguageMenuItem', 'nextLanguageMenuItem'
         );
         this.state = state;
         this.state.videoCaption = this;
@@ -36,15 +38,25 @@ function (Sjson, AsyncProcess) {
 
     VideoCaption.prototype = {
         langTemplate: [
-            '<div class="lang menu-container">',
-                '<button class="control hide-subtitles" aria-disabled="false" aria-pressed="true">',
+            '<div class="grouped-controls">',
+                '<button class="control toggle-transcript" aria-disabled="false" aria-pressed="true">',
                     '<span class="icon-fallback-img">',
                         '<span class="icon fa fa-quote-left" aria-hidden="true"></span>',
-                        '<span class="text control-text">',
+                        '<span class="sr control-text">',
                             gettext('Turn off transcript'),
                         '</span>',
                     '</span>',
                 '</button>',
+                '<div class="lang menu-container">',
+                    '<button class="control language-menu" aria-disabled="false" aria-pressed="false">',
+                        '<span class="icon-fallback-img">',
+                            '<span class="icon fa fa-caret-right" aria-hidden="true"></span>',
+                            '<span class="sr control-text">',
+                                gettext('Open language menu'),
+                            '</span>',
+                        '</span>',
+                    '</button>',
+                '</div>',
             '</div>'
         ].join(''),
 
@@ -89,7 +101,8 @@ function (Sjson, AsyncProcess) {
             this.loaded = false;
             this.subtitlesEl = $(this.template);
             this.container = $(this.langTemplate);
-            this.hideSubtitlesEl = this.container.find('.hide-subtitles');
+            this.transcriptControlEl = this.container.find('.toggle-transcript');
+            this.languageChooserEl = this.container.find('.lang');
 
             if (_.keys(languages).length) {
                 this.renderLanguageMenu(languages);
@@ -106,10 +119,10 @@ function (Sjson, AsyncProcess) {
             var state = this.state,
                 events = [
                     'mouseover', 'mouseout', 'mousedown', 'click', 'focus', 'blur',
-                    'keydown'
+                    'keydown', 'keyup'
                 ].join(' ');
 
-            this.hideSubtitlesEl.on('click', this.toggle);
+            this.transcriptControlEl.on('click', this.toggle);
             this.subtitlesEl
                 .on({
                     mouseenter: this.onMouseEnter,
@@ -121,9 +134,10 @@ function (Sjson, AsyncProcess) {
                 .on(events, 'li[data-index]', this.onCaptionHandler);
 
             if (this.showLanguageMenu) {
-                this.container.on({
+                this.languageChooserEl.on({
                     mouseenter: this.onContainerMouseEnter,
-                    mouseleave: this.onContainerMouseLeave
+                    mouseleave: this.onContainerMouseLeave,
+                    keyup: this.handleKeypress
                 });
             }
 
@@ -146,6 +160,115 @@ function (Sjson, AsyncProcess) {
 
         onCaptionUpdate: function (event, time) {
             this.updatePlayTime(time);
+        },
+
+        handleKeypress: function(event) {
+            var KEY = $.ui.keyCode,
+                keyCode = event.keyCode;
+
+            switch(keyCode) {
+                // Handle keypresses
+                case KEY.ENTER:
+                case KEY.SPACE:
+                case KEY.UP:
+                    if ($('.control-lang').is(':focus')) {
+                        var focused = $(':focus').parent(),
+                            index = this.languageChooserEl.find('li').index(focused),
+                            total = this.languageChooserEl.find('li').size() - 1;
+
+                        this.previousLanguageMenuItem(index, total);
+                    } else {
+                        this.openLanguageMenu(event);
+                    }
+                    break;
+                case KEY.DOWN:
+                    if ($('.control-lang').is(':focus')) {
+                        var focused = $(':focus').parent(),
+                            index = this.languageChooserEl.find('li').index(focused),
+                            total = this.languageChooserEl.find('li').size() - 1;
+
+                        this.nextLanguageMenuItem(index, total);
+                    } else {
+                        this.openLanguageMenu(event);
+                    }
+                    break;
+                case KEY.ESCAPE:
+                    this.closeLanguageMenu(event);
+                    break;
+            }
+
+            return event.keyCode === KEY.TAB;
+        },
+
+        nextLanguageMenuItem: function(index, total) {
+            if (event.altKey) {
+                return true;
+            }
+
+            if (event.shiftKey) {
+                return true;
+            }
+
+            if (index === total) {
+                this.languageChooserEl
+                    .find('.control-lang').first()
+                    .focus();
+            } else {
+                this.languageChooserEl
+                    .find('li:eq(' + index + ')')
+                    .next()
+                        .find('.control-lang')
+                        .focus();
+            }
+
+            return false;
+        },
+
+        previousLanguageMenuItem: function(index, total) {
+            if (event.altKey) {
+                return true;
+            }
+
+            if (event.shiftKey) {
+                return true;
+            }
+
+            if (index === 0) {
+                this.languageChooserEl
+                    .find('.control-lang').last()
+                    .focus();
+            } else {
+                this.languageChooserEl
+                    .find('li:eq(' + index + ')')
+                    .prev()
+                        .find('.control-lang')
+                        .focus();
+            }
+
+            return false;
+        },
+
+        openLanguageMenu: function(event) {
+            var button = this.languageChooserEl,
+                menu = button.parent().find('.menu');
+
+
+            this.state.el.trigger('language_menu:show');
+            button
+                .addClass('is-opened');
+            menu
+                .find('.control-lang').last()
+                .focus();
+        },
+
+        closeLanguageMenu: function(event) {
+            var button = this.languageChooserEl;
+
+            this.state.el.trigger('language_menu:hide');
+            button
+                .removeClass('is-opened')
+                .find('.language-menu')
+                    .focus();
         },
 
         onCaptionHandler: function (event) {
@@ -368,7 +491,7 @@ function (Sjson, AsyncProcess) {
                         self.fetchCaption(true);
                     } else {
                         self.hideCaptions(true, false);
-                        self.hideSubtitlesEl.hide();
+                        // self.languageChooserEl.hide();
                     }
                 }
             });
@@ -406,7 +529,7 @@ function (Sjson, AsyncProcess) {
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     self.hideCaptions(true, false);
-                    self.hideSubtitlesEl.hide();
+                    // self.transcriptControlEl.hide();
                 }
             });
 
@@ -450,7 +573,7 @@ function (Sjson, AsyncProcess) {
 
             $.each(languages, function(code, label) {
                 var li = $('<li data-lang-code="' + code + '" />'),
-                    link = $('<button class="control control-lang" href="javascript:void(0);">' + label + '</button>');
+                    link = $('<button class="control control-lang">' + label + '</button>');
 
                 if (currentLang === code) {
                     li.addClass('is-active');
@@ -460,7 +583,7 @@ function (Sjson, AsyncProcess) {
                 menu.append(li);
             });
 
-            this.container.append(menu);
+            this.languageChooserEl.append(menu);
 
             menu.on('click', '.control-lang', function (e) {
                 var el = $(e.currentTarget).parent(),
@@ -837,7 +960,7 @@ function (Sjson, AsyncProcess) {
         },
 
         /**
-        * @desc Shows/Hides captions on click `CC` button
+        * @desc Shows/Hides transcript on click `transcript` button
         *
         * @param {jquery Event} event
         *
@@ -861,7 +984,7 @@ function (Sjson, AsyncProcess) {
         *
         */
         hideCaptions: function (hide_captions, update_cookie, trigger_event) {
-            var hideSubtitlesEl = this.hideSubtitlesEl,
+            var transcriptControlEl = this.transcriptControlEl,
                 state = this.state, text;
 
             if (typeof update_cookie === 'undefined') {
@@ -876,7 +999,7 @@ function (Sjson, AsyncProcess) {
                     this.state.el.trigger('captions:hide');
                 }
 
-                hideSubtitlesEl
+                transcriptControlEl
                     .removeClass('is-active')
                 .attr('aria-pressed', 'false')
                 .find('.control-text')
@@ -890,7 +1013,7 @@ function (Sjson, AsyncProcess) {
                     this.state.el.trigger('captions:show');
                 }
 
-                hideSubtitlesEl
+                transcriptControlEl
                     .addClass('is-active')
                 .attr('aria-pressed', 'true')
                 .find('.control-text')
