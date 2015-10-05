@@ -293,6 +293,18 @@ class EditContainerTest(NestedVerticalTest):
         container = self.go_to_nested_container_page()
         self.modify_display_name_and_verify(container)
 
+    def test_edit_html(self):
+        """
+        Test the "html" functionality, be sure it appears as expected.
+        """
+        modifided_content = "<p>modified content</p>"
+        unit = self.go_to_unit_page()
+        component = unit.xblocks[1]
+        component.edit()
+        html_editor = HtmlComponentEditorView(self.browser, component.locator)
+        html_editor.set_content_and_save(modified_content)
+        self.assertEqual(component.student_content, modified_content)
+
 
 class EditVisibilityModalTest(ContainerBase):
     """
