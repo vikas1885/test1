@@ -564,6 +564,7 @@ define(['jquery', 'backbone', 'underscore', 'gettext', 'js/views/baseview',
             var editors = [];
 
             if (xblockInfo.isChapter()) {
+                /* globals course */
                 if (course.get('self_paced')) {
                     editors = [StaffLockEditor];
                 }
