@@ -564,9 +564,19 @@ define(['jquery', 'backbone', 'underscore', 'gettext', 'js/views/baseview',
             var editors = [];
 
             if (xblockInfo.isChapter()) {
-                editors = [ReleaseDateEditor, StaffLockEditor];
+                if (course.get('self_paced')) {
+                    editors = [StaffLockEditor];
+                }
+                else {
+                    editors = [ReleaseDateEditor, StaffLockEditor];
+                }
             } else if (xblockInfo.isSequential()) {
-                editors = [ReleaseDateEditor, GradingEditor, DueDateEditor];
+                if (course.get('self_paced')) {
+                    editors = [GradingEditor];
+                }
+                else {
+                    editors = [ReleaseDateEditor, GradingEditor, DueDateEditor];
+                }
 
                 // since timed/proctored exams are optional
                 // we want it before the StaffLockEditor
