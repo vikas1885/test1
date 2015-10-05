@@ -44,7 +44,7 @@ function() {
                     '">',
                     '<span class="icon-fallback-img">',
                         '<span class="icon fa fa-volume-up" aria-hidden="true"></span>',
-                        '<span class="text control-text">',
+                        '<span class="sr control-text">',
                             gettext('Volume'),
                         '</span>',
                     '</span>',
