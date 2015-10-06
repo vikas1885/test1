@@ -423,5 +423,5 @@ define([
         StaffLockEditor: StaffLockEditor,
         VerificationAccessEditor: VerificationAccessEditor,
         TimedExaminationPreferenceEditor: TimedExaminationPreferenceEditor
-    }
+    };
 });
