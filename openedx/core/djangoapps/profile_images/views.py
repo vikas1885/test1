@@ -117,8 +117,9 @@ class ProfileImageView(APIView):
             self._supported_image_types = {}
             for type_ in IMAGE_TYPES.values():
                 self._supported_image_types.update(
-                    {mimetype: type_['extension'][0] for mimetype in type_['mimetypes']}
+                    {mimetype: type_['extension'] for mimetype in type_['mimetypes']}
                 )
+        print self._supported_image_types
         return self._supported_image_types
 
     def post(self, request, username):
