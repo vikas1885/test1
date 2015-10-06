@@ -219,7 +219,8 @@ class ProfileImageViewPostTestCase(ProfileImageEndpointMixin, APITestCase):
 
         self.check_upload_event_emitted(old=TEST_UPLOAD_DT, new=TEST_UPLOAD_DT2)
 
-    def test_upload_jpeg_mimetype(self, mock_log):
+    @patch('openedx.core.djangoapps.profile_images.views._make_upload_dt', return_value=TEST_UPLOAD_DT)
+    def test_upload_jpeg_mimetype(self, mock_make_image_version, mock_log):
         """
         Test that a user can upload raw content with the appropriate mimetype
         """
