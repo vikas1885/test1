@@ -584,6 +584,7 @@ define(['jquery', 'backbone', 'underscore', 'gettext', 'js/views/baseview',
                     editors.push(VerificationAccessEditor);
                 }
             }
+            /* globals course */
             if (course.get('self_paced')) {
                 editors = _.without(editors, ReleaseDateEditor, DueDateEditor);
             }
