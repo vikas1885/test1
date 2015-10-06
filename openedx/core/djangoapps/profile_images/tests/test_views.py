@@ -238,7 +238,7 @@ class ProfileImageViewPostTestCase(ProfileImageEndpointMixin, APITestCase):
             LOG_MESSAGE_CREATE,
             {'image_names': get_profile_image_names(self.user.username).values(), 'user_id': self.user.id}
         )
-        self.check_upload_event_emitted
+        self.check_upload_event_emitted()
 
     def test_upload_tiff_mimetype(self, mock_log):
         """
