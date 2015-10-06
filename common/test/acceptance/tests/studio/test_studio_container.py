@@ -296,15 +296,20 @@ class EditContainerTest(NestedVerticalTest):
 
     def test_edit_raw_html(self):
         """
-        Test the "html" functionality, be sure it appears as expected.
+        Test the raw html editing functionality.
         """
         modified_content = "<p>modified content</p>"
+
+        #navigate to and open the component for editing
         unit = self.go_to_unit_page()
-        unit = unit.xblocks[1].go_to_container()
-        component = unit.xblocks[1].children[0]
+        container = unit.xblocks[1].go_to_container()
+        component = container.xblocks[1].children[0]
         component.edit()
+
         html_editor = HtmlComponentEditorView(self.browser, component.locator)
         html_editor.set_content_and_save(modified_content, raw=True)
+
+        #quick-n-dirty regex to strip simple html tags
         stripped_content = re.sub('<[^<]+?>', '', modified_content)
         self.assertEqual(component.student_content, stripped_content)
 
