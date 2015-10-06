@@ -14,7 +14,8 @@ import logging
 log = logging.getLogger('VideoPage')
 
 VIDEO_BUTTONS = {
-    'transcript': '.toggle-transcript',
+    'transcript': '.lang',
+    'transcript_button': '.toggle-transcript',
     'volume': '.volume',
     'play': '.video_control.play',
     'pause': '.video_control.pause',
@@ -322,7 +323,7 @@ class VideoPage(PageObject):
 
         # toggle captions visibility state if needed
         if self.is_captions_visible() != captions_new_state:
-            self.click_player_button('transcript')
+            self.click_player_button('transcript_button')
 
             # Verify that captions state is toggled/changed
             EmptyPromise(lambda: self.is_captions_visible() == captions_new_state,
