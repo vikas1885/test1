@@ -624,6 +624,15 @@ class SplitModuleCourseTests(SplitModuleTest):
         self.assertEqual(course.edited_by, "testassist@edx.org")
         self.assertDictEqual(course.grade_cutoffs, {"Pass": 0.45})
 
+        course_index = modulestore().get_course_index_info(course.id)
+        new_draft = modulestore().create_course(
+            'testX', 'rerun_2.0', 'run_q2', 1, BRANCH_NAME_DRAFT,
+            versions_dict=course_index['versions'])
+        courses = modulestore().get_courses(branch=BRANCH_NAME_DRAFT)
+        # should have gotten 4 draft courses
+        self.assertEqual(len(courses), 4)
+        self.assertIn(new_draft.id.version_agnostic(), [c.id for c in courses])
+
     @patch('xmodule.tabs.CourseTab.from_json', side_effect=mock_tab_from_json)
     def test_get_org_courses(self, _from_json):
         courses = modulestore().get_courses(branch=BRANCH_NAME_DRAFT, org='guestx')
