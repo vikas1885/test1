@@ -16,6 +16,7 @@ from ...pages.lms.staff_view import StaffPage
 from ...tests.helpers import create_user_partition_json
 
 import datetime
+import re
 from bok_choy.promise import Promise, EmptyPromise
 from base_studio_test import ContainerBase
 from xmodule.partitions.partitions import Group
@@ -293,17 +294,19 @@ class EditContainerTest(NestedVerticalTest):
         container = self.go_to_nested_container_page()
         self.modify_display_name_and_verify(container)
 
-    def test_edit_html(self):
+    def test_edit_raw_html(self):
         """
         Test the "html" functionality, be sure it appears as expected.
         """
-        modifided_content = "<p>modified content</p>"
+        modified_content = "<p>modified content</p>"
         unit = self.go_to_unit_page()
-        component = unit.xblocks[1]
+        unit = unit.xblocks[1].go_to_container()
+        component = unit.xblocks[1].children[0]
         component.edit()
         html_editor = HtmlComponentEditorView(self.browser, component.locator)
-        html_editor.set_content_and_save(modified_content)
-        self.assertEqual(component.student_content, modified_content)
+        html_editor.set_content_and_save(modified_content, raw=True)
+        stripped_content = re.sub('<[^<]+?>', '', modified_content)
+        self.assertEqual(component.student_content, stripped_content)
 
 
 class EditVisibilityModalTest(ContainerBase):
