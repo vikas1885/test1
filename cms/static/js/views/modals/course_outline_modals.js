@@ -564,20 +564,9 @@ define(['jquery', 'backbone', 'underscore', 'gettext', 'js/views/baseview',
             var editors = [];
 
             if (xblockInfo.isChapter()) {
-                /* globals course */
-                if (course.get('self_paced')) {
-                    editors = [StaffLockEditor];
-                }
-                else {
-                    editors = [ReleaseDateEditor, StaffLockEditor];
-                }
+                editors = [ReleaseDateEditor, StaffLockEditor];
             } else if (xblockInfo.isSequential()) {
-                if (course.get('self_paced')) {
-                    editors = [GradingEditor];
-                }
-                else {
-                    editors = [ReleaseDateEditor, GradingEditor, DueDateEditor];
-                }
+                editors = [ReleaseDateEditor, GradingEditor, DueDateEditor];
 
                 // since timed/proctored exams are optional
                 // we want it before the StaffLockEditor
@@ -594,6 +583,9 @@ define(['jquery', 'backbone', 'underscore', 'gettext', 'js/views/baseview',
                 if (xblockInfo.hasVerifiedCheckpoints()) {
                     editors.push(VerificationAccessEditor);
                 }
+            }
+            if (course.get('self_paced')) {
+                editors = _.without(editors, ReleaseDateEditor, DueDateEditor);
             }
             return new SettingsXBlockModal($.extend({
                 editors: editors,
