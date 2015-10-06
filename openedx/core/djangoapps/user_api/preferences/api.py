@@ -100,6 +100,8 @@ def update_user_preferences(requesting_user, update, username=None, existing_use
                 Null values for a preference will be treated as a request to delete the key in question.
         username (str): Optional username specifying which account should be updated. If not specified,
             `requesting_user.username` is assumed.
+        existing_user (User): If existing User object is passed then user would not be fetched again via
+            requesting_user.name. This is primarily used for internal calls from other API modules
 
     Raises:
         UserNotFound: no user with username `username` exists (or `requesting_user.username` if
