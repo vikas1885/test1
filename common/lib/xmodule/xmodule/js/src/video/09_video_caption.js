@@ -22,7 +22,7 @@ function (Sjson, AsyncProcess) {
         if (!(this instanceof VideoCaption)) {
             return new VideoCaption(state);
         }
-
+ 
         _.bindAll(this, 'toggle', 'onMouseEnter', 'onMouseLeave', 'onMovement',
             'onContainerMouseEnter', 'onContainerMouseLeave', 'fetchCaption',
             'onResize', 'pause', 'play', 'onCaptionUpdate', 'onCaptionHandler', 'destroy',
