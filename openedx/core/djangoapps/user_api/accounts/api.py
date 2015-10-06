@@ -6,8 +6,7 @@ from pytz import UTC
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.core.validators import validate_email, validate_slug, ValidationError
-from openedx.core.djangoapps.user_api.preferences.api import create_user_preference_serializer, \
-    validate_user_preference_serializer, delete_user_preference
+from openedx.core.djangoapps.user_api.preferences.api import update_user_preferences
 
 from student.models import User, UserProfile, Registration
 from student import views as student_views
@@ -70,7 +69,7 @@ def get_account_settings(request, username=None, configuration=None, view=None):
         username = requesting_user.username
 
     try:
-        existing_user = User.objects.get(username=username)
+        existing_user = User.objects.select_related('preference').get(username=username)
     except ObjectDoesNotExist:
         raise UserNotFound()
 
@@ -160,17 +159,6 @@ def update_account_settings(requesting_user, update, username=None):
     for serializer in user_serializer, legacy_profile_serializer:
         field_errors = add_serializer_errors(serializer, update, field_errors)
 
-    if "account_privacy" in update:
-        account_privacy = update["account_privacy"]
-        if account_privacy is not None:
-            try:
-                account_privacy_serializer = create_user_preference_serializer(
-                    existing_user, "account_privacy", account_privacy
-                )
-                validate_user_preference_serializer(account_privacy_serializer, "account_privacy", account_privacy)
-            except PreferenceValidationError as error:
-                field_errors["account_privacy"] = error.preference_errors["account_privacy"]
-
     # If the user asked to change email, validate it.
     if changing_email:
         try:
@@ -196,11 +184,10 @@ def update_account_settings(requesting_user, update, username=None):
         for serializer in user_serializer, legacy_profile_serializer:
             serializer.save()
 
-        if "account_privacy" in update:
-            if account_privacy is not None:
-                account_privacy_serializer.save()
-            else:
-                delete_user_preference(requesting_user, "account_privacy")
+        # if any exception is raised for user preference (i.e. account_privacy), the entire transaction for user account
+        # patch is rolled back and the data is not saved
+        if 'account_privacy' in update:
+            update_user_preferences(requesting_user, {'account_privacy': update["account_privacy"]}, None, existing_user)
 
         if "language_proficiencies" in update:
             new_language_proficiencies = update["language_proficiencies"]
@@ -226,6 +213,8 @@ def update_account_settings(requesting_user, update, username=None):
             existing_user_profile.set_meta(meta)
             existing_user_profile.save()
 
+    except PreferenceValidationError as err:
+        raise AccountValidationError(err)
     except Exception as err:
         raise AccountUpdateError(
             u"Error thrown when saving account updates: '{}'".format(err.message)

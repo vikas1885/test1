@@ -232,7 +232,8 @@ class TestAccountAPI(UserAPITestCase):
         """
         self.different_client.login(username=self.different_user.username, password=self.test_password)
         self.create_mock_profile(self.user)
-        response = self.send_get(self.different_client)
+        with self.assertNumQueries(10):
+            response = self.send_get(self.different_client)
         self._verify_full_shareable_account_response(response)
 
     # Note: using getattr so that the patching works even if there is no configuration.
@@ -246,7 +247,8 @@ class TestAccountAPI(UserAPITestCase):
         """
         self.different_client.login(username=self.different_user.username, password=self.test_password)
         self.create_mock_profile(self.user)
-        response = self.send_get(self.different_client)
+        with self.assertNumQueries(10):
+            response = self.send_get(self.different_client)
         self._verify_private_account_response(response)
 
     @ddt.data(
@@ -273,7 +275,17 @@ class TestAccountAPI(UserAPITestCase):
         # Update user account visibility setting.
         set_user_preference(self.user, ACCOUNT_VISIBILITY_PREF_KEY, preference_visibility)
         self.create_mock_profile(self.user)
-        response = self.send_get(client)
+
+        if (api_client == 'different_client' and requesting_username == "different_user" and (
+                preference_visibility == ALL_USERS_VISIBILITY or preference_visibility == PRIVATE_VISIBILITY)) \
+                or (preference_visibility == PRIVATE_VISIBILITY and api_client == 'staff_client'
+                    and requesting_username == "staff_client"):
+            num_of_queries = 10
+        else:
+            num_of_queries = 9
+
+        with self.assertNumQueries(num_of_queries):
+            response = self.send_get(client)
 
         if requesting_username == "different_user":
             verify_fields_visible_to_all_users(response)
@@ -281,7 +293,8 @@ class TestAccountAPI(UserAPITestCase):
             self._verify_full_account_response(response)
 
         # Verify how the view parameter changes the fields that are returned.
-        response = self.send_get(client, query_parameters='view=shared')
+        with self.assertNumQueries(9):
+            response = self.send_get(client, query_parameters='view=shared')
         verify_fields_visible_to_all_users(response)
 
     def test_get_account_default(self):
@@ -290,7 +303,8 @@ class TestAccountAPI(UserAPITestCase):
         as created by the test UserFactory).
         """
         def verify_get_own_information():
-            response = self.send_get(self.client)
+            with self.assertNumQueries(9):
+                response = self.send_get(self.client)
             data = response.data
             self.assertEqual(16, len(data))
             self.assertEqual(self.user.username, data["username"])
@@ -328,7 +342,8 @@ class TestAccountAPI(UserAPITestCase):
         legacy_profile.save()
 
         self.client.login(username=self.user.username, password=self.test_password)
-        response = self.send_get(self.client)
+        with self.assertNumQueries(9):
+            response = self.send_get(self.client)
         for empty_field in ("level_of_education", "gender", "country", "bio"):
             self.assertIsNone(response.data[empty_field])
 
