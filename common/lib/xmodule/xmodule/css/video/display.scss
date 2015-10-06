@@ -67,19 +67,23 @@ html:not('.afontgarde') .icon-fallback-img {
 
 .video {
   @include clearfix();
-  background: #f3f3f3;
+  background: rgb(240, 243, 245); // UXPL grayscale-cool xx-light;
   display: block;
   margin: 0 -12px;
   padding: 12px;
   border-radius: 5px;
   outline: none;
 
-  &:focus, &:active, &:hover {
+  &:focus,
+  &:active,
+  &:hover {
     border: 0;
   }
 
   &.is-initialized {
+
     .video-wrapper {
+
       .spinner {
         display: none;
       }
@@ -121,7 +125,7 @@ html:not('.afontgarde') .icon-fallback-img {
     margin: 0;
     padding: 0;
 
-    .video-download-button{
+    .video-download-button {
       display: inline-block;
       vertical-align: top;
       margin: ($baseline*0.75) ($baseline/2) 0 0;
@@ -182,8 +186,8 @@ html:not('.afontgarde') .icon-fallback-img {
   }
 
   .video-wrapper {
-    float: left;
-    margin-right: flex-gutter(9);
+    @include float(left);
+    @include margin-right(flex-gutter(9));
     width: flex-grid(6, 9);
     background-color: black;
     position: relative;
@@ -191,7 +195,7 @@ html:not('.afontgarde') .icon-fallback-img {
     .video-player-pre, 
     .video-player-post {
        height: 50px;
-       background-color: black;
+       background-color: rgb(17, 16, 16) // UXPL grayscale black;
     }
 
     .spinner {
@@ -272,8 +276,7 @@ html:not('.afontgarde') .icon-fallback-img {
     .video-controls {
       @include clearfix();
       position: relative;
-      border: 1px solid rgb(40, 44, 46); // UXPL grayscale-cool x-dark
-      border-top: 0;
+      border: 0;
       background: rgb(40, 44, 46); // UXPL grayscale-cool x-dark
       color: rgb(240, 243, 245); // UXPL grayscale-cool xx-light
 
@@ -290,9 +293,9 @@ html:not('.afontgarde') .icon-fallback-img {
         display: inline-block;
         vertical-align: middle;
         margin: 0;
-        padding: ($baseline / 2) ($baseline / 1.5); // 10px 15px
         border: 0;
         border-radius: 0;
+        padding: ($baseline / 2) ($baseline / 1.5); // 10px 15px
         background: rgb(40, 44, 46); // UXPL grayscale-cool x-dark
         box-shadow: none;
         text-shadow: none;
@@ -320,8 +323,15 @@ html:not('.afontgarde') .icon-fallback-img {
         .icon-fallback-img {
 
           .icon {
+            // if the icon font doesn't render, we need to provide dimensions for the svg's
             width: 1em;
             height: 1em;
+
+            &.icon-hd {
+              // except when it's text, like with HD
+              // otherwise it's shifted to the right because "HD" is wider than 1em
+              width: auto;
+            }
           }
         }
       }
@@ -334,8 +344,6 @@ html:not('.afontgarde') .icon-fallback-img {
         left: 0;
         right: 0;
         z-index: 1;
-        margin-left: -1px;
-        margin-right: -1px;
         height: ($baseline / 2);
         border: 0;
         border-radius: 0;
@@ -360,8 +368,8 @@ html:not('.afontgarde') .icon-fallback-img {
           top: 0;
           height: $baseline;
           width: $baseline;
-          margin-left: 0;
-          border: 1px solid rgb(203, 89, 141); // UXPL secondary base
+          @include margin-left(0);
+          border: 0;
           border-radius: 50%;
           background: rgb(203, 89, 141); // UXPL secondary base
           background-size: 50%;
@@ -382,8 +390,8 @@ html:not('.afontgarde') .icon-fallback-img {
         @include float(left);
         @include margin(0 lh() 0 0);
         list-style: none;
-        padding: 0;
         @include border-right(1px solid rgb(40, 44, 46)); // UXPL grayscale-cool x-dark
+        padding: 0;
 
         @media (max-width: 1120px) {
           @include margin-right(lh(0.5));
@@ -422,7 +430,8 @@ html:not('.afontgarde') .icon-fallback-img {
 
         .volume,
         .add-fullscreen,
-        .grouped-controls {
+        .grouped-controls,
+        .quality-control {
           @include border-left(1px dotted rgb(79, 89, 93)); // UXPL grayscale-cool x-dark
         }
 
@@ -450,8 +459,8 @@ html:not('.afontgarde') .icon-fallback-img {
             @include right(0); // right-align menus since this whole collection is on the right
             width: ($baseline * 6); // 120px
             margin: 0;
-            padding: 0;
             border: none;
+            padding: 0;
             box-shadow: none;
             background-color: rgb(40, 44, 46); // UXPL grayscale-cool x-dark
             list-style: none;
@@ -465,9 +474,9 @@ html:not('.afontgarde') .icon-fallback-img {
                 @include text-align(left);
                 display: block;
                 width: 100%;
-                padding: lh(0.5);
                 border: 0;
                 border-radius: 0;
+                padding: lh(0.5);
                 background: rgb(40, 44, 46); // UXPL grayscale-cool x-dark
                 box-shadow: none;
                 color: rgb(231, 236, 238); // UXPL grayscale-cool x-light
@@ -576,26 +585,24 @@ html:not('.afontgarde') .icon-fallback-img {
             bottom: ($baseline * 1.5); // 30
             width: ($baseline * 2);
             height: 125px;
-            margin-left: -1px;
+            @include margin-left(-1px);
             background-color: rgb(40, 44, 46); // UXPL grayscale-cool x-dark
-            border: 1px solid rgb(40, 44, 46); // UXPL grayscale-cool x-dark
-            opacity: 0;
 
             .volume-slider {
               height: 100px;
-              border: 0;
               width: ($baseline / 4);
               margin: 14px auto;
+              border: 0;
               background: rgb(79, 89, 93); // UXPL grayscale-cool dark
 
               .ui-slider-handle {
                 @extend %ui-fake-link;
                 @include transition(height $tmg-s2 ease-in-out 0s, width $tmg-s2 ease-in-out 0s);
+                @include left(-6px);
                 height: 15px;
-                left: -6px;
                 width: 15px;
                 background: rgb(203, 89, 141); // UXPL secondary base
-                border-color: rgb(203, 80, 141); // UXPL secondary base
+                border: 0;
                 background-size: 50%;
                 border-radius: 15px;
 
@@ -613,6 +620,8 @@ html:not('.afontgarde') .icon-fallback-img {
         }
 
         .quality-control {
+          font-weight: 700;
+          letter-spacing: -1px; // tighten up the text a bit for a better fit
 
           &.active {
             color: rgb(14, 166, 236); // UXPL primary accent
@@ -655,22 +664,22 @@ html:not('.afontgarde') .icon-fallback-img {
   }
 
   .subtitles {
-    padding-left: 0;
-    float: left;
-    max-height: 460px;
+    @include float(left);
     overflow: auto;
-    width: flex-grid(3, 9);
     margin: 0;
+    max-height: 460px;
+    width: flex-grid(3, 9);
+    @include padding-left(0);
     font-size: 14px;
     list-style: none;
     visibility: visible;
 
     li {
       @extend %ui-fake-link;
-      border: 0;
-      color: rgb(29,157,217);
       margin-bottom: 8px;
+      border: 0;
       padding: 0;
+      color: rgb(29,157,217);
       line-height: lh();
 
       &.current {
@@ -786,8 +795,8 @@ html:not('.afontgarde') .icon-fallback-img {
       .video-wrapper {
         height: 100%;
         width: 75%;
+        @include margin-right(0);
         vertical-align: middle;
-        margin-right: 0;
 
         object,
         iframe,
@@ -800,20 +809,20 @@ html:not('.afontgarde') .icon-fallback-img {
 
       .video-controls {
         @extend %ui-depth4;
+        position: absolute;
         bottom: 0;
         left: 0;
-        position: absolute;
         width: 100%;
       }
     }
 
     .subtitles {
-      @include box-sizing(border-box);
-      @include transition(none);
-      background: $black;
       height: 100%;
       width: 25%;
       padding: lh();
+      @include box-sizing(border-box);
+      @include transition(none);
+      background: $black;
       visibility: visible;
 
       li {
@@ -880,5 +889,3 @@ html:not('.afontgarde') .icon-fallback-img {
     }
   }
 }
-
-
