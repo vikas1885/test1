@@ -8,7 +8,6 @@ import logging
 from django.utils.translation import ugettext as _
 from django.utils.timezone import utc
 from rest_framework import permissions, status
-from rest_framework.exceptions import UnsupportedMediaType
 from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +17,7 @@ from openedx.core.lib.api.authentication import (
     OAuth2AuthenticationAllowInactiveUser,
     SessionAuthenticationAllowInactiveUser,
 )
+from openedx.core.lib.api.parsers import ImageUploadParser
 from openedx.core.lib.api.permissions import IsUserInUrl, IsUserInUrlOrStaff
 from openedx.core.djangoapps.user_api.accounts.image_helpers import get_profile_image_names, set_has_profile_image
 from .images import IMAGE_TYPES, validate_uploaded_image, create_profile_images, remove_profile_images, ImageValidationError
@@ -35,22 +35,6 @@ def _make_upload_dt():
     """
     return datetime.datetime.utcnow().replace(tzinfo=utc)
 
-
-class ImageUploadParser(FileUploadParser):
-    media_type = 'image/*'
-
-    @property
-    def image_types(self):
-        if not getattr(self, '_image_types', None):
-            self._image_types = set()
-            for type_ in IMAGE_TYPES.values():
-                self._image_types.update(type_['mimetypes'])
-        return self._image_types
-
-    def parse(self, stream, media_type=None, parser_context=None):
-        if media_type not in self.image_types:
-            raise UnsupportedMediaType(media_type)
-        return super(ImageUploadParser, self).parse(stream, media_type, parser_context)
 
 
 class ProfileImageView(APIView):
@@ -126,6 +110,16 @@ class ProfileImageView(APIView):
     parser_classes = (MultiPartParser, FormParser, ImageUploadParser)
     authentication_classes = (OAuth2AuthenticationAllowInactiveUser, SessionAuthenticationAllowInactiveUser)
     permission_classes = (permissions.IsAuthenticated, IsUserInUrl)
+
+    @property
+    def supported_image_types(self):
+        if not hasattr(self, '_supported_image_types'):
+            self._supported_image_types = {}
+            for type_ in IMAGE_TYPES.values():
+                self._supported_image_types.update(
+                    {mimetype: type_['extension'][0] for mimetype in type_['mimetypes']}
+                )
+        return self._supported_image_types
 
     def post(self, request, username):
         """
