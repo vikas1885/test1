@@ -10,7 +10,7 @@ define([
     'underscore',
     'gettext',
     'js/views/modals/base_modal',
-    'js/view/modals/editors',
+    'js/views/modals/editors',
     'js/views/utils/xblock_utils'
 ], function($, _, gettext, BaseModal, Editors, XBlockViewUtils) {
     'use strict';
