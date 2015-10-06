@@ -624,14 +624,24 @@ class SplitModuleCourseTests(SplitModuleTest):
         self.assertEqual(course.edited_by, "testassist@edx.org")
         self.assertDictEqual(course.grade_cutoffs, {"Pass": 0.45})
 
-        course_index = modulestore().get_course_index_info(course.id)
-        new_draft = modulestore().create_course(
-            'testX', 'rerun_2.0', 'run_q2', 1, BRANCH_NAME_DRAFT,
-            versions_dict=course_index['versions'])
+    def test_get_courses_with_same_course_index(self):
+        """
+        Test that if two courses pointing to same course index,
+        get_courses should return both.
+        """
         courses = modulestore().get_courses(branch=BRANCH_NAME_DRAFT)
-        # should have gotten 4 draft courses
+        # Should have gotten 3 draft courses.
+        self.assertEqual(len(courses), 3)
+
+        course_index = modulestore().get_course_index_info(courses[0].id)
+        # Creating a new course with same course index of another course.
+        new_draft_course = modulestore().create_course(
+            'testX', 'rerun_2.0', 'run_q2', 1, BRANCH_NAME_DRAFT, versions_dict=course_index['versions']
+        )
+        courses = modulestore().get_courses(branch=BRANCH_NAME_DRAFT)
+        # Should have gotten 4 draft courses.
         self.assertEqual(len(courses), 4)
-        self.assertIn(new_draft.id.version_agnostic(), [c.id for c in courses])
+        self.assertIn(new_draft_course.id.version_agnostic(), [c.id for c in courses])
 
     @patch('xmodule.tabs.CourseTab.from_json', side_effect=mock_tab_from_json)
     def test_get_org_courses(self, _from_json):
